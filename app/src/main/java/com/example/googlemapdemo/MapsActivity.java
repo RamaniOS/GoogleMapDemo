@@ -79,8 +79,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 if (task.isSuccessful() && task.getResult() != null) {
                     Location location = task.getResult();
                     LatLng marker = new LatLng(location.getLatitude(), location.getLongitude());
-                    mMap.addMarker(new MarkerOptions().position(marker).title("Current use  location").icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW)));
-                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(marker, 10));
+                    setHomeLocation(marker);
+                    //mMap.addMarker(new MarkerOptions().position(marker).title("Current use  location").icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW)));
+                    //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(marker, 10));
                 }
             }
         });
@@ -140,6 +141,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             initLocationCallback();
             fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper());
         }
+    }
+
+    private void setHomeLocation(LatLng location) {
+        MarkerOptions markerOptions = new MarkerOptions().position(location)
+                .title("Your Location")
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
+                .snippet("You are here");
+        curr_marker = mMap.addMarker(markerOptions);
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 20));
     }
 
 }
