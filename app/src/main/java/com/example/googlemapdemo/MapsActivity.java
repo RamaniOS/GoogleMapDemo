@@ -10,8 +10,6 @@ import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Looper;
 import android.util.Log;
@@ -30,11 +28,14 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polygon;
+import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -49,6 +50,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private Marker dest_marker;
     private Polyline polyline;
     private Polygon polygon;
+    private static final int POLYGON_NUM = 4;
+    List<Marker> markersList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,6 +69,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+
+        mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
+            @Override
+            public void onMapLongClick(LatLng latLng) {
+                setDestinationLocation(latLng);
+            }
+        });
 
         if (!checkPermission())
             requestPermission();
@@ -92,6 +102,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 //        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney").icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW)));
 //        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(sydney, 10));
     }
+
+
 
     private void initLocation() {
         // init location client
@@ -150,6 +162,67 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .snippet("You are here");
         curr_marker = mMap.addMarker(markerOptions);
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 20));
+    }
+
+    private void setDestinationLocation(LatLng location) {
+        MarkerOptions markerOptions = new MarkerOptions().position(location)
+                .title("Your Destination")
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE))
+                .draggable(true);
+      /*if (dest_marker == null) {
+            dest_marker = mMap.addMarker(markerOptions);
+        } else {
+            clearMap();
+            dest_marker = mMap.addMarker(markerOptions);
+        }*/
+
+        if (markersList.size() == POLYGON_NUM) {
+            clearMap();
+        }
+
+        markersList.add(mMap.addMarker(markerOptions));
+
+        if (markersList.size() == POLYGON_NUM) {
+            drawShape();
+        }
+        //drawLine(curr_marker.getPosition(), dest_marker.getPosition());
+
+    }
+
+    private void clearMap() {
+        if (dest_marker != null) {
+            dest_marker.remove();
+            dest_marker = null;
+        }
+        for (int i = 0; i<POLYGON_NUM; i++) {
+            markersList.get(i).remove();
+        }
+        markersList.removeAll(markersList);
+        //polyline.remove();
+        polygon.remove();
+    }
+
+    private void drawLine(LatLng home, LatLng dest) {
+        PolylineOptions polylineOptions = new PolylineOptions()
+                .add(home, dest)
+                .clickable(true)
+                .color(R.color.colorPrimary)
+                .width(10)
+                .visible(true);
+        polyline = mMap.addPolyline(polylineOptions);
+    }
+
+    private void drawShape() {
+        PolygonOptions polygonOptions = new PolygonOptions()
+                .fillColor(R.color.colorAccent)
+                .strokeColor(R.color.colorPrimaryDark)
+                .strokeWidth(20)
+                .visible(true);
+
+        for (int i = 0; i < POLYGON_NUM; i++) {
+            polygonOptions.add(markersList.get(i).getPosition());
+        }
+        polygon = mMap.addPolygon(polygonOptions);
     }
 
 }
